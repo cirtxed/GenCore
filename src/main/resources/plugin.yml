@@ -1,0 +1,4 @@
+name: GenCore
+version: '${project.version}'
+main: liltrip.gencore.GenCore
+api-version: 1.17
