@@ -2,3 +2,11 @@ name: GenCore
 version: '${project.version}'
 main: liltrip.gencore.GenCore
 api-version: 1.17
+depend:
+  - NBTAPI
+commands:
+  gen:
+    aliases:
+      - gens
+      - generator
+      - generators
