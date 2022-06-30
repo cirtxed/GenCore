@@ -1,0 +1,6 @@
+
+#SPAWN RATE IS IN TICKS
+spawnRate:
+  1
+spawnLastBlock:
+  true

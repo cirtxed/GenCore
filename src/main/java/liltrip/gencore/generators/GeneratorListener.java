@@ -3,11 +3,11 @@ package liltrip.gencore.generators;
 import de.tr7zw.nbtapi.NBTBlock;
 import de.tr7zw.nbtapi.NBTItem;
 import liltrip.gencore.GenCore;
+import liltrip.gencore.config.GenConfig;
 import liltrip.gencore.data.GenPlayer;
 import liltrip.gencore.data.PlayerManager;
 import liltrip.gencore.utils.chat.ColorUtils;
 import liltrip.gencore.utils.item.ItemBuilder;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -23,9 +23,8 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Arrays;
+import java.util.*;
 
 public class GeneratorListener implements Listener {
 
@@ -37,6 +36,10 @@ public class GeneratorListener implements Listener {
         NBTBlock nbtBlock = new NBTBlock(event.getBlock());
         NBTItem handNBT = new NBTItem(event.getItemInHand());
 
+        if(!handNBT.hasKey("GENERATOR")) {
+            return;
+        }
+
         GenPlayer genPlayer = manager.getUser(player.getUniqueId());
         if(genPlayer.getGenerators().size()>= genPlayer.getGenSlots()) {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
@@ -45,12 +48,13 @@ public class GeneratorListener implements Listener {
             return;
         }
 
+        nbtBlock.getData().setString("NAME", handNBT.getString("NAME"));
         nbtBlock.getData().setBoolean("GENERATOR", true);
         nbtBlock.getData().setInteger("TIER", handNBT.getInteger("TIER"));
+        nbtBlock.getData().setItemStack("DROP", handNBT.getItemStack("DROP"));
+        nbtBlock.getData().setInteger("UPGRADECOST", handNBT.getInteger("UPGRADECOST"));
         Bukkit.broadcastMessage(nbtBlock.getData().getInteger("TIER").toString());
-        //Bukkit.broadcastMessage(genPlayer.getGenSlots() + " : " + genPlayer.getGenerators());
         genPlayer.addGenerator(event.getBlock().getLocation());
-        //Bukkit.broadcastMessage(genPlayer.getGenerators().toString());
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                 TextComponent.fromLegacyText("§aGenerator Placed! §7(" + genPlayer.getGenerators().size() + ":" + genPlayer.getGenSlots() + ")"));
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1, 1);
@@ -90,44 +94,72 @@ public class GeneratorListener implements Listener {
         }
     }
 
-    //@EventHandler
-    //public void upgradeGenerator(PlayerInteractEvent event) {
-    //    Player player = event.getPlayer();
-    //    if(!(event.getAction() == Action.RIGHT_CLICK_BLOCK && player.isSneaking() && event.getHand() == EquipmentSlot.HAND))
-    //        return;
-    //    Block block = event.getClickedBlock();
-    //    assert block != null;
-    //    if(block.getType() == Material.AIR)
-    //        return;
-    //    NBTBlock nbtBlock = new NBTBlock(block);
-    //    //- Check if generator is max!
-    //    if(nbtBlock.getData().getInteger("TIER") == 10) {
-    //        player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-    //                TextComponent.fromLegacyText("§aGenerator is already max level!"));
-    //        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-    //        return;
-    //    }
-//
-//
-    //}
+    @EventHandler
+    public void upgradeGenerator(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+
+        if(event.getAction() != Action.RIGHT_CLICK_BLOCK)
+            return;
+        if(!player.isSneaking())
+            return;
+        if(Objects.requireNonNull(event.getHand()).name().equals("OFF_HAND"))
+            return;
+        Block block = event.getClickedBlock();
+        if((block != null ? block.getType() : null) == Material.AIR)
+            return;
+        int tiers = GenConfig.getGenerators().getConfigurationSection("generators.").getKeys(false).size();
+        NBTBlock nbtBlock = new NBTBlock(block);
+        //- Check if generator is max!
+        if(nbtBlock.getData().getInteger("TIER") == tiers) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText("§cGenerator is already max level!"));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+            return;
+        }
+        //- Check if money > data.getInteger("UPGRADECOST")
+        if(!(GenCore.getEcon().getBalance(player) > nbtBlock.getData().getInteger("UPGRADECOST"))) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText("§cYou do not have enough Money!"));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+            return;
+        }
+        Bukkit.broadcastMessage(nbtBlock.getData().getInteger("UPGRADECOST").toString());
+        for(String key : Objects.requireNonNull(GenConfig.getGenerators().getConfigurationSection("generators.")).getKeys(false))  {
+            Integer tier = (Integer) Objects.requireNonNull(GenConfig.getGenerators().get("generators." + key + ".generator.tier"));
+            if (nbtBlock.getData().getInteger("TIER") >= tier) {
+                continue;
+            }
+            String genType = String.valueOf(GenConfig.getGenerators().get("generators." + key + ".generator.type"));
+            String genDrop = String.valueOf(GenConfig.getGenerators().get("generators." + key + ".drops.type"));
+            String genName = String.valueOf(GenConfig.getGenerators().get("generators." + key + ".generator.name"));
+            Integer upcost = (Integer) GenConfig.getGenerators().get("generators." + key + ".generator.upgradecost");
+            GenCore.getEcon().withdrawPlayer(player, nbtBlock.getData().getInteger("UPGRADECOST"));
+            nbtBlock.getData().setInteger("UPGRADECOST", upcost);
+            block.setType(Objects.requireNonNull(Material.matchMaterial(genType)));
+            nbtBlock.getData().setString("NAME", genName);
+            nbtBlock.getData().setBoolean("GENERATOR", true);
+            nbtBlock.getData().setInteger("TIER", tier);
+            nbtBlock.getData().setItemStack("DROP", new ItemStack(Objects.requireNonNull(Material.matchMaterial(genDrop))));
+            return;
+        }
+    }
 
 
     //MAKE INTO A UTIL THING LATER
     public ItemStack GiveGenerator(Block block) {
         NBTBlock nbtBlock = new NBTBlock(block);
+        String genName = nbtBlock.getData().getString("NAME");
         ItemStack generator = ItemBuilder.createItem(new ItemStack(block.getType()),
-                ColorUtils.translateAlternateColorCodes('&', "&a&l" + block.getType().name() + " GENERATOR"),
-                new String[]{"TIER: " + nbtBlock.getData().getInteger("TIER"),
-                        "PLACE GENERATOR TO USE"});
-        //ItemMeta meta = generator.getItemMeta();
-        //assert meta != null;
-        //meta.setDisplayName(ChatColor.GREEN + block.getType().getData().getName() + " GENERATOR");
-        //meta.setLore(Arrays.asList(ColorUtils.translateAlternateColorCodes('&', "&7TIER:&6 " + nbtBlock.getData().getInteger("TIER")), "PLACE GENERATOR TO USE!"));
-        //generator.setItemMeta(meta);
+                ColorUtils.translateAlternateColorCodes('&', genName), new String[]{"§e§lTIER: §f" + nbtBlock.getData().getInteger("TIER"), "§e§lPLACE THIS in §f(/plot)"});
         NBTItem nbtItem = new NBTItem(generator);
-        nbtItem.setInteger("TIER", nbtBlock.getData().getInteger("TIER"));
+        Integer upcost = nbtBlock.getData().getInteger("UPGRADECOST");
+        nbtItem.setInteger("UPGRADECOST", upcost);
+        nbtItem.setString("NAME", genName);
         nbtItem.setBoolean("GENERATOR", true);
+        nbtItem.setInteger("TIER", nbtBlock.getData().getInteger("TIER"));
+        nbtItem.setItemStack("DROP", nbtBlock.getData().getItemStack("DROP"));
         nbtItem.applyNBT(generator);
         return generator;
     }
+
 }

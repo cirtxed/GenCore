@@ -1,9 +1,6 @@
 package liltrip.gencore.commands;
 
-import liltrip.gencore.commands.gen.GenAddGenSlots;
-import liltrip.gencore.commands.gen.GenHelp;
-import liltrip.gencore.commands.gen.GenRemGenSlots;
-import liltrip.gencore.commands.gen.GenSetGenSlots;
+import liltrip.gencore.commands.gen.*;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -29,6 +26,8 @@ public class CommandManager implements CommandExecutor, TabExecutor {
         subCommands.add(new GenSetGenSlots());
         subCommands.add(new GenRemGenSlots());
         subCommands.add(new GenAddGenSlots());
+        subCommands.add(new GenGiveGenerators());
+        subCommands.add(new GenReloadConfig());
     }
 
     @Override

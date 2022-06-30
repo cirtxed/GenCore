@@ -4,6 +4,7 @@ main: liltrip.gencore.GenCore
 api-version: 1.17
 depend:
   - NBTAPI
+  - Vault
 commands:
   gen:
     aliases:
