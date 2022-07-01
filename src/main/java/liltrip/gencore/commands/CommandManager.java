@@ -28,6 +28,7 @@ public class CommandManager implements CommandExecutor, TabExecutor {
         subCommands.add(new GenAddGenSlots());
         subCommands.add(new GenGiveGenerators());
         subCommands.add(new GenReloadConfig());
+        subCommands.add(new GenList());
     }
 
     @Override
