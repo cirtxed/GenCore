@@ -10,9 +10,9 @@ import liltrip.gencore.utils.chat.ColorUtils;
 import liltrip.gencore.utils.item.ItemBuilder;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -53,11 +53,11 @@ public class GeneratorListener implements Listener {
         nbtBlock.getData().setInteger("TIER", handNBT.getInteger("TIER"));
         nbtBlock.getData().setItemStack("DROP", handNBT.getItemStack("DROP"));
         nbtBlock.getData().setInteger("UPGRADECOST", handNBT.getInteger("UPGRADECOST"));
-        Bukkit.broadcastMessage(nbtBlock.getData().getInteger("TIER").toString());
+        nbtBlock.getData().setUUID("OWNER", player.getUniqueId());
         genPlayer.addGenerator(event.getBlock().getLocation());
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                 TextComponent.fromLegacyText("§aGenerator Placed! §7(" + genPlayer.getGenerators().size() + ":" + genPlayer.getGenSlots() + ")"));
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1, 1);
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, SoundCategory.MASTER, 1, 1);
 
     }
 
@@ -77,8 +77,9 @@ public class GeneratorListener implements Listener {
             return;
 
         player.getInventory().addItem(GiveGenerator(block));
-        player.playSound(player.getLocation(), Sound.BLOCK_LEVER_CLICK, 1, 1);
+        player.playSound(player.getLocation(), Sound.BLOCK_LEVER_CLICK, SoundCategory.MASTER, 1, 1);
         genPlayer.removeGenerator(block.getLocation());
+        nbtBlock.getData().getKeys().clear();
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                 TextComponent.fromLegacyText("§aGenerator Broken! §7(" + genPlayer.getGenerators().size() + ":" + genPlayer.getGenSlots() + ")"));
         block.setType(Material.AIR);
@@ -107,23 +108,32 @@ public class GeneratorListener implements Listener {
         Block block = event.getClickedBlock();
         if((block != null ? block.getType() : null) == Material.AIR)
             return;
-        int tiers = GenConfig.getGenerators().getConfigurationSection("generators.").getKeys(false).size();
+        int tiers = Objects.requireNonNull(GenConfig.getGenerators().getConfigurationSection("generators.")).getKeys(false).size();
+        assert block != null;
         NBTBlock nbtBlock = new NBTBlock(block);
+
+        if(!nbtBlock.getData().hasKey("GENERATOR"))
+            return;
+        if(!nbtBlock.getData().getUUID("OWNER").equals(player.getUniqueId())) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText("§cYou do not own this generator!"));
+            return;
+        }
+
         //- Check if generator is max!
         if(nbtBlock.getData().getInteger("TIER") == tiers) {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                     TextComponent.fromLegacyText("§cGenerator is already max level!"));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_GUITAR, SoundCategory.MASTER, 1, 15);
             return;
         }
-        //- Check if money > data.getInteger("UPGRADECOST")
+        //- Check if money > data.getInteger("UPGRADE COST")
         if(!(GenCore.getEcon().getBalance(player) > nbtBlock.getData().getInteger("UPGRADECOST"))) {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                     TextComponent.fromLegacyText("§cYou do not have enough Money!"));
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_GUITAR, SoundCategory.MASTER, 1, 1);
             return;
         }
-        Bukkit.broadcastMessage(nbtBlock.getData().getInteger("UPGRADECOST").toString());
         for(String key : Objects.requireNonNull(GenConfig.getGenerators().getConfigurationSection("generators.")).getKeys(false))  {
             Integer tier = (Integer) Objects.requireNonNull(GenConfig.getGenerators().get("generators." + key + ".generator.tier"));
             if (nbtBlock.getData().getInteger("TIER") >= tier) {
@@ -140,6 +150,9 @@ public class GeneratorListener implements Listener {
             nbtBlock.getData().setBoolean("GENERATOR", true);
             nbtBlock.getData().setInteger("TIER", tier);
             nbtBlock.getData().setItemStack("DROP", new ItemStack(Objects.requireNonNull(Material.matchMaterial(genDrop))));
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText("§aGenerator upgraded!"));
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER,1, 1);
             return;
         }
     }

@@ -1,21 +1,16 @@
 package liltrip.gencore.utils.menusystem.menus;
 
-import liltrip.gencore.GenCore;
 import liltrip.gencore.config.GenConfig;
+import liltrip.gencore.utils.chat.ColorUtils;
+import liltrip.gencore.utils.item.ItemBuilder;
 import liltrip.gencore.utils.menusystem.PaginatedMenu;
 import liltrip.gencore.utils.menusystem.PlayerMenuUtility;
-import net.md_5.bungee.api.ChatColor;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.Objects;
 
 public class GenListMenu extends PaginatedMenu {
 
@@ -35,73 +30,29 @@ public class GenListMenu extends PaginatedMenu {
 
     @Override
     public void handleMenu(InventoryClickEvent e) {
-        Player p = (Player) e.getWhoClicked();
-
-        ArrayList<Player> players = new ArrayList<Player>(Bukkit.getOnlinePlayers());
-
-        if (e.getCurrentItem().getType().equals(Material.PLAYER_HEAD)) {
-
-            //PlayerMenuUtility playerMenuUtility = MenuManagerSystem.getPlayerMenuUtility(p);
-            //playerMenuUtility.setPlayerToKill(Bukkit.getPlayer(UUID.fromString(e.getCurrentItem().getItemMeta().getPersistentDataContainer().get(new NamespacedKey(MenuManagerSystem.getPlugin(), "uuid"), PersistentDataType.STRING))));
-
-            //new KillConfirmMenu(playerMenuUtility).open();
-
-        }else if (e.getCurrentItem().getType().equals(Material.BARRIER)) {
-
-            //close inventory
-            p.closeInventory();
-
-        }else if(e.getCurrentItem().getType().equals(Material.DARK_OAK_BUTTON)){
-            if (ChatColor.stripColor(e.getCurrentItem().getItemMeta().getDisplayName()).equalsIgnoreCase("Left")){
-                if (page == 0){
-                    p.sendMessage(ChatColor.GRAY + "You are already on the first page.");
-                }else{
-                    page = page - 1;
-                    super.open();
-                }
-            }else if (ChatColor.stripColor(e.getCurrentItem().getItemMeta().getDisplayName()).equalsIgnoreCase("Right")){
-                if (!((index + 1) >= players.size())){
-                    page = page + 1;
-                    super.open();
-                }else{
-                    p.sendMessage(ChatColor.GRAY + "You are on the last page.");
-                }
-            }
+        e.setCancelled(true);
+        if(e.getCurrentItem().getType() == Material.BARRIER) {
+            Player player = (Player) e.getWhoClicked();
+            player.closeInventory();
         }
     }
 
     @Override
     public void setMenuItems() {
-
         addMenuBorder();
 
-        //The thing you will be looping through to place items
-        ArrayList<Player> players = new ArrayList<Player>(Bukkit.getOnlinePlayers());
+        for(String key : Objects.requireNonNull(GenConfig.getGenerators().getConfigurationSection("generators.")).getKeys(false)) {
+            String genType = String.valueOf(GenConfig.getGenerators().get("generators." + key + ".generator.type"));
+            Integer tier = (Integer) Objects.requireNonNull(GenConfig.getGenerators().get("generators." + key + ".generator.tier"));
+            String genName = String.valueOf(GenConfig.getGenerators().get("generators." + key + ".generator.name"));
+            ItemStack generator = ItemBuilder.createItem(new ItemStack(Objects.requireNonNull(Material.matchMaterial(genType))),
+                    ColorUtils.translateAlternateColorCodes('&', genName), new String[]{"§e§lTIER: §f" + tier, "§e§lPLACE THIS in §f(/plot)"});
 
-        ///////////////////////////////////// Pagination loop template
-        if(players != null && !players.isEmpty()) {
-            for(int i = 0; i < getMaxItemsPerPage(); i++) {
-                index = getMaxItemsPerPage() * page + i;
-                if(index >= players.size()) break;
-                if (players.get(index) != null){
-                    ///////////////////////////
-
-                    //Create an item from our collection and place it into the inventory
-                    ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD, 1);
-                    ItemMeta playerMeta = playerItem.getItemMeta();
-                    playerMeta.setDisplayName(ChatColor.RED + players.get(index).getDisplayName());
-
-                    playerMeta.getPersistentDataContainer().set(new NamespacedKey(GenCore.getInstance(), "uuid"), PersistentDataType.STRING, players.get(index).getUniqueId().toString());
-                    playerItem.setItemMeta(playerMeta);
-
-                    inventory.addItem(playerItem);
-
-                    ////////////////////////
-                }
-            }
+            inventory.addItem(generator);
         }
-        ////////////////////////
-
+        inventory.setItem(48, super.FILLER_GLASS);
+        inventory.setItem(50, super.FILLER_GLASS);
+        setFillerGlass();
 
     }
 

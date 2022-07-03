@@ -1,76 +1,46 @@
 generators:
   COAL:
     generator:
-      name:
-        "&e&lCOAL GENERATOR"
-      type:
-        COAL_BLOCK
-      tier:
-        1
-      upgradecost:
-        100
+      name: "&e&lCOAL GENERATOR"
+      type: COAL_BLOCK
+      tier: 1
+      upgradecost: 100
     drops:
-      type:
-        COAL
-      worth:
-        500
+      type: COAL
+      worth: 500
   IRON:
     generator:
-      name:
-        "&e&lIRON GENERATOR"
-      type:
-        IRON_BLOCK
-      tier:
-        2
-      upgradecost:
-        200
+      name: "&e&lIRON GENERATOR"
+      type: IRON_BLOCK
+      tier: 2
+      upgradecost: 200
     drops:
-      type:
-        IRON_INGOT
-      worth:
-        500
+      type: IRON_INGOT
+      worth: 500
   REDSTONE:
     generator:
-      name:
-        "&e&lREDSTONE GENERATOR"
-      type:
-        REDSTONE_BLOCK
-      tier:
-        3
-      upgradecost:
-        300
+      name: "&e&lREDSTONE GENERATOR"
+      type: REDSTONE_BLOCK
+      tier: 3
+      upgradecost: 300
     drops:
-      type:
-        REDSTONE
-      worth:
-        500
+      type: REDSTONE
+      worth: 500
   DIAMOND:
     generator:
-      name:
-        "&e&lDIAMOND GENERATOR"
-      type:
-        DIAMOND_BLOCK
-      tier:
-        4
-      upgradecost:
-        400
+      name: "&e&lDIAMOND GENERATOR"
+      type: DIAMOND_BLOCK
+      tier: 4
+      upgradecost: 400
     drops:
-      type:
-        DIAMOND
-      worth:
-        500
+      type: DIAMOND
+      worth: 500
   EMERALD:
     generator:
-      name:
-        "&e&lEMERALD GENERATOR"
-      type:
-        EMERALD_BLOCK
-      tier:
-        5
-      upgradecost:
-        500
+      name: "&e&lEMERALD GENERATOR"
+      type: EMERALD_BLOCK
+      tier: 5
+      upgradecost: 500
     drops:
-      type:
-        EMERALD
-      worth:
-        500
+      type: EMERALD
+      worth: 500

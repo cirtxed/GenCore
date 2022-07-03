@@ -1,6 +1,8 @@
 package liltrip.gencore.commands.gen;
 
+import liltrip.gencore.GenCore;
 import liltrip.gencore.commands.SubCommand;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -44,11 +46,10 @@ public class GenHelp extends SubCommand {
 
     @Override
     public void perform(Player player, String[] args) {
-        player.sendMessage(getFormattedAHelpMessage(player));
-
+        player.sendMessage(getFormattedAHelpMessage());
     }
 
-    public static String[] getFormattedAHelpMessage(OfflinePlayer player) {
+    public static String[] getFormattedAHelpMessage() {
         return new String[]{
                 "§6/gen help: §eDisplays the /admin commands",
                 "§6/gen setbooster <float>: §eSets the global XP Booster",

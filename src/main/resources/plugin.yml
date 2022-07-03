@@ -11,3 +11,9 @@ commands:
       - gens
       - generator
       - generators
+  genlist:
+    aliases:
+      - generatorlist
+      - genslist
+      - listofgens
+      - listgens

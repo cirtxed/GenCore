@@ -46,8 +46,13 @@ public abstract class Menu implements InventoryHolder {
 
     //Helpful utility method to fill all remaining slots with "filler glass"
     public void setFillerGlass(){
-        for (int i = 0; i < getSlots(); i++) {
-            if (inventory.getItem(i) == null){
+        //for (int i = 0; i < getSlots(); i++) {
+        //    if (inventory.getItem(i) == null){
+        //        inventory.setItem(i, FILLER_GLASS);
+        //    }
+        //}
+        for (int i = 0 ; i < inventory.getSize() ; i++) {
+            if (inventory.getItem(i) == null || inventory.getItem(i).getType() == Material.AIR) {
                 inventory.setItem(i, FILLER_GLASS);
             }
         }

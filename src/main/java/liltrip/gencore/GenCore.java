@@ -2,11 +2,13 @@ package liltrip.gencore;
 
 import de.tr7zw.nbtinjector.NBTInjector;
 import liltrip.gencore.commands.CommandManager;
+import liltrip.gencore.commands.GenListCmd;
 import liltrip.gencore.config.CoreConfig;
 import liltrip.gencore.config.GenConfig;
 import liltrip.gencore.data.PlayerEvents;
 import liltrip.gencore.data.PlayerManager;
 import liltrip.gencore.generators.GeneratorListener;
+import liltrip.gencore.generators.GeneratorProtection;
 import liltrip.gencore.generators.GeneratorRunnable;
 import liltrip.gencore.utils.menusystem.MenuListener;
 import liltrip.gencore.utils.menusystem.PlayerMenuUtility;
@@ -17,11 +19,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class GenCore extends JavaPlugin {
 
@@ -31,9 +33,6 @@ public final class GenCore extends JavaPlugin {
     @Getter private static Economy econ = null;
 
     private static final HashMap<Player, PlayerMenuUtility> playerMenuUtilityMap = new HashMap<>();
-
-
-
 
     @Override
     public void onEnable() {
@@ -53,26 +52,22 @@ public final class GenCore extends JavaPlugin {
 
         this.getDataFolder().mkdirs();
         Objects.requireNonNull(getCommand("gen")).setExecutor(new CommandManager());
+        Objects.requireNonNull(getCommand("genlist")).setExecutor(new GenListCmd());
+
 
         getServer().getPluginManager().registerEvents(new GeneratorListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerEvents(), this);
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
-
-        //getServer().getPluginManager().registerEvents(new XpEarnEvents(), this);
-        //Objects.requireNonNull(getCommand("Stats")).setExecutor(new StatsCmd());
+        getServer().getPluginManager().registerEvents(new GeneratorProtection(), this);
 
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        File genFile = new File(GenConfig.getGenerators().getCurrentPath());
-        File coreFile = new File(CoreConfig.getLang().getCurrentPath());
-        try {
-            GenConfig.getGenerators().save(genFile);
-            CoreConfig.getLang().save(coreFile);
-        } catch (IOException e) {
-            e.printStackTrace();
+        for(Player player : Bukkit.getOnlinePlayers()) {
+            playerManager.savePlayer(player.getUniqueId());
+            player.kickPlayer("Reboot");
         }
     }
 

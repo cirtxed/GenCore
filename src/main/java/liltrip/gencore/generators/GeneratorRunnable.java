@@ -26,7 +26,7 @@ public class GeneratorRunnable implements Runnable {
     PlayerManager manager = GenCore.getPlayerManager();
 
     public GeneratorRunnable(GenCore plugin) {
-        id = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this, 40, 40);
+        id = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this, 20*10L, 20*10L);
     }
 
     Boolean spawnType = CoreConfig.getLang().getBoolean("spawnLastBlock");
